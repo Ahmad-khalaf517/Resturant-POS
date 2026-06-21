@@ -51,7 +51,7 @@ model Customer {
   lastName    String?
 
   phone       String?
-  email       String?
+  email       String? @unique
   address     String?
 
   orders      Order[]
