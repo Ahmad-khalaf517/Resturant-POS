@@ -4,6 +4,12 @@ CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'MANAGER', 'CASHIER');
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('DRAFT', 'COMPLETED', 'CANCELLED', 'REFUNDED');
 
+-- CreateEnum
+CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'CARD', 'BANK_TRANSFER', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'PARTIALLY_PAID', 'REFUNDED');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
@@ -41,6 +47,7 @@ CREATE TABLE "orders" (
     "customerId" TEXT,
     "cashierId" TEXT NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'COMPLETED',
+    "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'PAID',
     "subtotal" DECIMAL(10,2) NOT NULL,
     "discountAmount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "taxAmount" DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -72,6 +79,7 @@ CREATE TABLE "products" (
     "categoryId" TEXT,
     "price" DECIMAL(10,2) NOT NULL,
     "cost" DECIMAL(10,2),
+    "stockQuantity" DECIMAL(10,3) NOT NULL DEFAULT 0,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -87,6 +95,7 @@ CREATE TABLE "order_items" (
     "productName" TEXT NOT NULL,
     "sku" TEXT,
     "quantity" DECIMAL(10,3) NOT NULL,
+    "costPrice" DECIMAL(10,2),
     "unitPrice" DECIMAL(10,2) NOT NULL,
     "discountAmount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "totalAmount" DECIMAL(10,2) NOT NULL,
@@ -94,11 +103,37 @@ CREATE TABLE "order_items" (
     CONSTRAINT "order_items_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "payments" (
+    "id" TEXT NOT NULL,
+    "orderId" TEXT NOT NULL,
+    "method" "PaymentMethod" NOT NULL,
+    "amount" DECIMAL(10,2) NOT NULL,
+    "reference" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "inventory_movements" (
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "quantity" DECIMAL(10,3) NOT NULL,
+    "reason" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "inventory_movements_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "customers_email_key" ON "customers"("email");
 
 -- CreateIndex
 CREATE INDEX "customers_phone_idx" ON "customers"("phone");
@@ -139,6 +174,12 @@ CREATE INDEX "order_items_orderId_idx" ON "order_items"("orderId");
 -- CreateIndex
 CREATE INDEX "order_items_productId_idx" ON "order_items"("productId");
 
+-- CreateIndex
+CREATE INDEX "payments_orderId_idx" ON "payments"("orderId");
+
+-- CreateIndex
+CREATE INDEX "inventory_movements_productId_idx" ON "inventory_movements"("productId");
+
 -- AddForeignKey
 ALTER TABLE "orders" ADD CONSTRAINT "orders_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -153,3 +194,9 @@ ALTER TABLE "order_items" ADD CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "inventory_movements" ADD CONSTRAINT "inventory_movements_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
