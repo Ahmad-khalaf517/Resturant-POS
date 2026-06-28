@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es2025",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "esModuleInterop": true,
+    "isolatedModules": false,
+    "moduleDetection": "auto",
+    "skipLibCheck": true,
+    "strict": true,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "types": ["node"]
+  },
+  "include": ["./src/**/*", "generated/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
